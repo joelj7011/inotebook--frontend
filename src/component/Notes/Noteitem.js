@@ -1,11 +1,12 @@
+//child
 import React, { useContext } from 'react'
 import noteContext from '../../Context/Note/NoteContext';
 
 const Noteitem = (props) => {
 
     const context = useContext(noteContext);
-    const { deleteNote } = context;
-    const { note ,updatenote} = props;
+    const { deleteNote,savednotes} = context;
+    const { note, updatenote } = props;
 
     return (
         <div className='col-md-3'>
@@ -22,7 +23,9 @@ const Noteitem = (props) => {
                             <i className="fa-solid fa-pen-to-square mx-2" onClick={() => {
                                 updatenote(note);
                             }}></i>
-
+                            <i className="fa-solid fa-floppy-disk  mx-2" onClick={() => {
+                               savednotes(note._id)
+                            }}></i>
                         </div>
 
                     </div>

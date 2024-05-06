@@ -1,12 +1,34 @@
-import React, { useEffect } from 'react'
+import React, { useContext } from 'react'
 import { Link, useLocation } from "react-router-dom";
+import { withRouter } from 'react-router-dom';
+import alertContext from '../Context/Alert/AlertContext';
+import Cookies from 'js-cookie';
 
-const Navbar = () => {
+const Navbar = ({ history }) => {
   const location = useLocation();
+  const { showAlert } = useContext(alertContext);
 
-  useEffect(() => {
-    console.log(location.pathname);
-  }, [location]) 
+
+  const handleLogOut = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const json = await response.json();
+      console.log(json)
+      if (json.success) {
+        Cookies.remove("accessToken" && "refreshToken" && "accessTokenExpiration");
+        history.push('/login');
+        showAlert("logged out successfully", 'success');
+      } else {
+        showAlert("something went erong", 'danger');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      showAlert('An error occurred. Please try again later.', 'danger');
+    }
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -22,19 +44,28 @@ const Navbar = () => {
             </li>
 
             <li className="nav-item">
-              <Link className={`nav-link ${location.pathname === "/about" ? "active" : ""}` }active to="/about">About</Link>
+              <Link className={`nav-link ${location.pathname === "/about" ? "active" : ""}`} to="/about">About</Link>
             </li>
 
           </ul>
-          <form className="d-flex" role="search">
-            <input className="form-control me-2" type="search" placeholder="Search" aria-label="Search" />
-            <button className="btn btn-outline-success" type="submit">Search</button>
-          </form>
+          {Cookies.get('accessToken') && Cookies.get('refreshToken')  ? (
+            <>
+              <button type="button" className="btn btn-primary mx-2" onClick={handleLogOut}>Logout</button>
+              <Link className="btn btn-primary mx-2" to="/getData" role='button'>Account</Link>
+            </>
+
+
+          ) : (
+            <form className='d-flex'>
+              <Link className="btn btn-primary mx-2" to="/login" role='button'>Login</Link>
+              <Link className="btn btn-primary mx-2" to="/signup" role='button'>SignUp</Link>
+            </form>
+          )}
         </div>
       </div>
-    </nav>
+    </nav >
 
   )
 }
 
-export default Navbar
+export default withRouter(Navbar);

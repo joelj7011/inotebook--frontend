@@ -2,11 +2,15 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import noteContext from '../.././Context/Note/NoteContext'
 import Noteitem from './Noteitem';
 import AddNote from './AddNote';
+import { withRouter } from 'react-router-dom'; // Import withRouter
+import AlertContext from "../../Context/Alert/AlertContext";
+import Cookies from 'js-cookie';
+import ForgotPassword from '../User/ForgotPassword';
 
-const Notes = () => {
+const Notes = ({ history }) => {
+    const { showAlert } = useContext(AlertContext);
     const context = useContext(noteContext)
     const { notes, FetchNotes, updateNote } = context;
-
     //to create reffrence
     const refClose = useRef(null);
     const ref = useRef(null);
@@ -15,34 +19,36 @@ const Notes = () => {
     const [note, setNote] = useState({ id: "", title1: "", description1: "", tag1: "default" });
 
     //to fetch the notes
-    useEffect(() => { FetchNotes(); },);
+    useEffect(() => {
+        if (Cookies.get('refreshToken') || Cookies.get('accessToken')) {
+            FetchNotes();
+        } else {
+            showAlert("Please login with your credentials to access the note feature", "success");
+            history.push('/login');
+        }
+    },[]);
 
 
     const updatenote = (currentNote) => {
         if (ref.current) {
             ref.current.click();
-
         }
+
         setNote({
             id: currentNote._id,
-            etitle: currentNote.title,
-            edescription: currentNote.description,
+            etitle: currentNote.title1,
+            edescription: currentNote.description1,
         });
 
     }
-    //update note
+
     const handleSubmit = () => {
-        // updateNote({
-        //     id: note.id,
-        //     title1: note.title1,
-        //     description1: note.description1
-        // });
         updateNote(note.id, note.title1, note.description1);
         refClose.current.click();
 
     }
 
-    //data override
+
     const onChange = (e) => {
         setNote({ ...note, [e.target.name]: e.target.value });
     }
@@ -51,12 +57,9 @@ const Notes = () => {
         <>
             <AddNote />
 
-            <button type="button" ref={ref} className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                Launch demo modal
+            <button type="button" ref={ref} className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#exampleModal">
             </button>
-
-
-            <div className="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
@@ -78,7 +81,7 @@ const Notes = () => {
                             </form>
                         </div>
                         <div className="modal-footer">
-                            <button type="button" ref={refClose} className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" ref={refClose} className="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
                             <button type="button" className="btn btn-primary" onClick={handleSubmit}>Save changes</button>
                         </div>
                     </div>
@@ -88,6 +91,7 @@ const Notes = () => {
             <div className='row'>
                 <h2>your notes</h2>
                 {notes.map((note) => {
+                    console.log("notes_>", note);
                     return <Noteitem key={note._id} updatenote={updatenote} note={note} />
                 })}
             </div>
@@ -95,4 +99,4 @@ const Notes = () => {
     )
 }
 
-export default Notes
+export default withRouter(Notes); // Wrap component with withRouter
