@@ -26,8 +26,7 @@ const Login = ({ history }) => {
       if (json.success) {
         const currentTime = Date.now();
         const expirationTime = currentTime + 3 * 60 * 1000;
-
-        Cookies.set('refreshToken', json.data.refreshToken, { expires: expirationTime});
+        Cookies.set('refreshToken', json.data.refreshToken, { expires: expirationTime });
         Cookies.set("accessToken", json.data.accessToken, { expires: expirationTime });
         Cookies.set("expiery", expirationTime);
         showAlert(json.message, "success");

@@ -33,7 +33,6 @@ const Notes = ({ history }) => {
         if (ref.current) {
             ref.current.click();
         }
-
         setNote({
             id: currentNote._id,
             etitle: currentNote.title1,
@@ -45,7 +44,6 @@ const Notes = ({ history }) => {
     const handleSubmit = () => {
         updateNote(note.id, note.title1, note.description1);
         refClose.current.click();
-
     }
 
 

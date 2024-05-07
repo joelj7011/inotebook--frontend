@@ -5,7 +5,7 @@ import noteContext from '../../Context/Note/NoteContext';
 const Noteitem = (props) => {
 
     const context = useContext(noteContext);
-    const { deleteNote,savednotes} = context;
+    const { deleteNote, savednotes} = context;
     const { note, updatenote } = props;
 
     return (
@@ -24,7 +24,7 @@ const Noteitem = (props) => {
                                 updatenote(note);
                             }}></i>
                             <i className="fa-solid fa-floppy-disk  mx-2" onClick={() => {
-                               savednotes(note._id)
+                                savednotes(note._id)
                             }}></i>
                         </div>
 

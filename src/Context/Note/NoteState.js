@@ -39,10 +39,7 @@ const NoteState = (props) => {
 
   //--add-Note---//
   const addNote = async (title, description, tag) => {
-
     try {
-
-      //API_call
       const response = await fetch(`${host}/api/notes/addnotes`, {
         method: "POST",
         credentials: "include",
@@ -52,33 +49,36 @@ const NoteState = (props) => {
         body: JSON.stringify({ title, description, tag }),
       });
       const responseData = await response.json();
-      console.log('response->', responseData.message);
-
+      console.log(responseData);
+      console.log("noyte->", responseData.data.note);
       if (response.ok) {
-        const newNote = [{
-          "_id": responseData._id || "",
-          "user": responseData.user || "",
-          "title": title || "",
-          "description": description || "",
-          "tag": tag || "",
-          "date": responseData.date || "",
-          "__v": responseData.__v || 0
-        }];
-
-        Setnotes((prevNotes) => { return prevNotes.concat(newNote) });
+        const newNote = {
+          _id: responseData.data.note._id || "",
+          user: responseData.data.note.user || "",
+          title: title || "",
+          description: description || "",
+          tag: tag || "",
+          date: responseData.data.note.date || "",
+          __v: responseData.__v || 0
+        };
+        console.log(newNote)
+        Setnotes(prevNotes => [...prevNotes, newNote]);
         showAlert(responseData.message, "success");
-
       } else {
-        console.error("Error:", responseData);
-      }
 
+        console.error("Error:", responseData);
+        showAlert("Failed to add note", "danger");
+      }
     } catch (error) {
-      console.error("error adding note", error.message);
+
+      console.error("Error adding note:", error.message);
+      showAlert("An error occurred while adding the note", "danger");
     }
-  }
+  };
 
   //---delete-note--//
   const deleteNote = async (id) => {
+    console.log(id);
 
     try {
       const response = await fetch(`${host}/api/notes/deleteNote/${id}`, {
@@ -132,31 +132,53 @@ const NoteState = (props) => {
 
 
   const savednotes = async (id) => {
-    console.log(id);
+
+    const response = await fetch(`${host}/api/notes/savenotes/${id}`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const json = await response.json();
+    console.log(json);
+    console.log(json.message)
+    if (json.success) {
+      showAlert(json.message, "success");
+    } else {
+      showAlert(json.message, "danger");
+    }
+
+  }
+
+
+  const fetcshNotes = async () => {
     try {
-      const response = await fetch(`${host}/api/notes/savenotes/${id}`, {
-        method: "POST",
-        credentials: "include",
+      const response = await fetch(`http://localhost:5000/api/notes/markednotes`, {
+        method: 'GET',
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },
       });
       const json = await response.json();
-      console.log(json);
-      console.log(json.message)
       if (json.success) {
-        showAlert(json.message, "success");
-        Setnotes(notes);
+        showAlert("Notes fetched", "success");
+        Setnotes(json.data.note);
       } else {
-        showAlert(json.message, "danger");
+        showAlert("Notes could not be fetched", "danger");
       }
     } catch (error) {
-      console.log("something went wrong", error);
+      showAlert(`Something went wrong: ${error}`, "danger");
     }
-  }
+  };
+
+
+
+
 
   return (
-    <NoteContext.Provider value={{ notes, Setnotes, addNote, deleteNote, updateNote, FetchNotes, savednotes }}>
+    <NoteContext.Provider value={{ notes, Setnotes, addNote, deleteNote, updateNote, FetchNotes, savednotes, fetcshNotes }}>
       {props.children}
     </NoteContext.Provider>
   )

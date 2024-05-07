@@ -16,16 +16,15 @@ const Navbar = ({ history }) => {
         credentials: 'include'
       });
       const json = await response.json();
-      console.log(json)
       if (json.success) {
-        Cookies.remove("accessToken" && "refreshToken" && "accessTokenExpiration");
+        Cookies.remove("accessToken");
+        Cookies.remove("refreshToken");
         history.push('/login');
         showAlert("logged out successfully", 'success');
       } else {
         showAlert("something went erong", 'danger');
       }
     } catch (error) {
-      console.error('Error logging out:', error);
       showAlert('An error occurred. Please try again later.', 'danger');
     }
   };
@@ -48,10 +47,12 @@ const Navbar = ({ history }) => {
             </li>
 
           </ul>
-          {Cookies.get('accessToken') && Cookies.get('refreshToken')  ? (
+          {Cookies.get('accessToken') && Cookies.get('refreshToken') ? (
             <>
               <button type="button" className="btn btn-primary mx-2" onClick={handleLogOut}>Logout</button>
               <Link className="btn btn-primary mx-2" to="/getData" role='button'>Account</Link>
+              <Link className="btn btn-primary mx-2" to="/shownotes" role='button'>Saved Notes</Link>
+
             </>
 
 
