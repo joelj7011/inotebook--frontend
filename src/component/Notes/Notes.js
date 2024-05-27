@@ -2,31 +2,28 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import noteContext from '../.././Context/Note/NoteContext'
 import Noteitem from './Noteitem';
 import AddNote from './AddNote';
-import { withRouter } from 'react-router-dom'; // Import withRouter
-import AlertContext from "../../Context/Alert/AlertContext";
-import Cookies from 'js-cookie';
-import ForgotPassword from '../User/ForgotPassword';
+import { useNavigate } from 'react-router-dom';
 
-const Notes = ({ history }) => {
-    const { showAlert } = useContext(AlertContext);
+const Notes = ({ navigate }) => {
     const context = useContext(noteContext)
+
     const { notes, FetchNotes, updateNote } = context;
     //to create reffrence
     const refClose = useRef(null);
     const ref = useRef(null);
+    navigate = useNavigate();
+    const isInitialMount = useRef(true);
 
     //to manage the state if the note
     const [note, setNote] = useState({ id: "", title1: "", description1: "", tag1: "default" });
 
     //to fetch the notes
     useEffect(() => {
-        if (Cookies.get('refreshToken') || Cookies.get('accessToken')) {
+        if (isInitialMount.current) {
             FetchNotes();
-        } else {
-            showAlert("Please login with your credentials to access the note feature", "success");
-            history.push('/login');
+            isInitialMount.current = false;
         }
-    },[]);
+    }, [FetchNotes]);
 
 
     const updatenote = (currentNote) => {
@@ -38,7 +35,6 @@ const Notes = ({ history }) => {
             etitle: currentNote.title1,
             edescription: currentNote.description1,
         });
-
     }
 
     const handleSubmit = () => {
@@ -46,13 +42,13 @@ const Notes = ({ history }) => {
         refClose.current.click();
     }
 
-
     const onChange = (e) => {
         setNote({ ...note, [e.target.name]: e.target.value });
     }
 
     return (
         <>
+        
             <AddNote />
 
             <button type="button" ref={ref} className="btn btn-primary d-none" data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -97,4 +93,4 @@ const Notes = ({ history }) => {
     )
 }
 
-export default withRouter(Notes); // Wrap component with withRouter
+export default Notes; 

@@ -1,123 +1,88 @@
 import React, { useContext, useState } from "react";
 import NoteContext from "./NoteContext";
 import alertContext from "../Alert/AlertContext";
+import useJwtInterceptors from "../../Hooks/useJwtInterceptors";
+import AuthContext from "../Auth/AuthContext";
 
 
 const NoteState = (props) => {
-  const host = "http://localhost:5000";
   const { showAlert } = useContext(alertContext);
-
   const notesinitial = [];
-
   const [notes, Setnotes] = useState(notesinitial);
-
+  const axiosPrivateInstance = useJwtInterceptors();
 
   const FetchNotes = async () => {
     try {
-      const response = await fetch(`${host}/api/notes/getnotes`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch notes");
+      const response = await axiosPrivateInstance.get(`/api/notes/getnotes`);
+      console.log("response", response);
+      if (!response) {
+        showAlert(response?.data?.message, "danger");
       }
-      const responseData = await response.json();
-      if (Array.isArray(responseData.notes)) {
-        Setnotes(responseData.notes);
+      const responseData = response?.data?.notes;
+      if (Array.isArray(responseData)) {
+        Setnotes(responseData);
       } else {
         Setnotes([]);
       }
     } catch (error) {
-      console.error("Error fetching notes:", error);
-
+      showAlert(error.response, "danger");
     }
   }
 
-
-  //--add-Note---//
   const addNote = async (title, description, tag) => {
     try {
-      const response = await fetch(`${host}/api/notes/addnotes`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title, description, tag }),
+      const response = await axiosPrivateInstance.post(`/api/notes/addnotes`, {
+        title: title,
+        description: description,
+        tag: tag,
       });
-      const responseData = await response.json();
-      console.log(responseData);
-      console.log("noyte->", responseData.data.note);
-      if (response.ok) {
+      const { data } = response.data;
+      if (response) {
         const newNote = {
-          _id: responseData.data.note._id || "",
-          user: responseData.data.note.user || "",
-          title: title || "",
-          description: description || "",
-          tag: tag || "",
-          date: responseData.data.note.date || "",
-          __v: responseData.__v || 0
+          _id: data.note._id || "",
+          user: data.note.user || "",
+          title,
+          description,
+          tag,
+          date: data.note.date || "",
+          __v: data.note.__v || 0
         };
-        console.log(newNote)
+
         Setnotes(prevNotes => [...prevNotes, newNote]);
-        showAlert(responseData.message, "success");
-      } else {
+        showAlert(response?.data?.message, "success");
 
-        console.error("Error:", responseData);
-        showAlert("Failed to add note", "danger");
       }
-    } catch (error) {
 
-      console.error("Error adding note:", error.message);
+    } catch (error) {
       showAlert("An error occurred while adding the note", "danger");
     }
   };
 
-  //---delete-note--//
   const deleteNote = async (id) => {
-    console.log(id);
-
     try {
-      const response = await fetch(`${host}/api/notes/deleteNote/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("failed to delete note");
-      }
-
+      const response = await axiosPrivateInstance.delete(`/api/notes/deleteNote/${id}`);
+      console.log(response);
       const newNote = notes.filter((note) => note._id !== id);
       Setnotes(newNote);
     }
     catch (error) {
-      console.error("error deleting note", error.message);
+      showAlert(error?.response?.message, "danger");
     }
 
   }
 
-  //---update-note--//
   const updateNote = async (id, title, description, tag) => {
 
     if (!title || !description) {
       alert("title and description is missing");
     }
 
-    const response = await fetch(`${host}/api/notes/updateNote/${id}`, {
-      method: "PUT",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title, description, tag }),
+    const response = await axiosPrivateInstance.put(`/api/notes/updateNote/${id}`, {
+      title: title,
+      description: description,
+      tag: tag
     });
-    await response.json();
+    console.log(response);
     for (let index = 0; index < notes.length; index++) {
       const element = notes[index];
       if (element._id === id) {
@@ -130,55 +95,50 @@ const NoteState = (props) => {
     Setnotes(notes);
   }
 
-
   const savednotes = async (id) => {
 
-    const response = await fetch(`${host}/api/notes/savenotes/${id}`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const json = await response.json();
-    console.log(json);
-    console.log(json.message)
-    if (json.success) {
-      showAlert(json.message, "success");
+    const response = await axiosPrivateInstance.post(`/api/notes/savenotes/${id}`);
+    const json = response;
+    if (json) {
+      showAlert(json?.data?.message, "success");
     } else {
-      showAlert(json.message, "danger");
+      showAlert(json?.data?.message, "danger");
     }
 
-  }
-
+  };
 
   const fetcshNotes = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/notes/markednotes`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const json = await response.json();
-      if (json.success) {
-        showAlert("Notes fetched", "success");
-        Setnotes(json.data.note);
+      const response = await axiosPrivateInstance.get(`/api/notes/markednotes`);
+      const json = response.data?.data?.note;
+      if (json) {
+        showAlert(json?.data?.message, "success");
+        Setnotes(json);
       } else {
-        showAlert("Notes could not be fetched", "danger");
+        showAlert(json?.data?.data?.message, "danger");
       }
     } catch (error) {
-      showAlert(`Something went wrong: ${error}`, "danger");
+      showAlert(error?.response?.data?.message, "danger");
     }
   };
 
+  const delSavNotes = async (id) => {
+    try {
+      console.log(id)
+      const response = await axiosPrivateInstance(`/api/notes/deletesavnote/${id}`);
+      console.log(response);
+      const delNote = notes.filter((note) => {
+        return note._id !== id
+      });
+      Setnotes(delNote);
+    } catch (error) {
+      console.log(error.response);
+    }
 
-
-
+  };
 
   return (
-    <NoteContext.Provider value={{ notes, Setnotes, addNote, deleteNote, updateNote, FetchNotes, savednotes, fetcshNotes }}>
+    <NoteContext.Provider value={{ notes, Setnotes, addNote, deleteNote, updateNote, FetchNotes, savednotes, fetcshNotes, delSavNotes }}>
       {props.children}
     </NoteContext.Provider>
   )

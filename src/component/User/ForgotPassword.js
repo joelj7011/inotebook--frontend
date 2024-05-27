@@ -1,44 +1,19 @@
 import React, { useContext, useState } from 'react'
-import alertContext from '../../Context/Alert/AlertContext';
-import { withRouter } from 'react-router-dom';
-import Cookies from 'js-cookie';
-const ForgotPassword = ({ history }) => {
-    const { showAlert } = useContext(alertContext);
-    const [password, Setpasword] = useState({ oldPass: "", newPass: "" });
+import userContext from '../../Context/User/UserContext';
 
-    const handleChange = (e) => {
-     
-        Setpasword({ ...password, [e.target.name]: e.target.value })
-    }
+
+const ForgotPassword = () => {
+    const [password, Setpasword] = useState({ oldPass: "", newPass: "" });
+    const { ForgotPassword } = useContext(userContext);
 
     const handleClick = async (e) => {
         e.preventDefault();
-        try {
-            const response = await fetch(`http://localhost:5000/api/auth/changePassword`, {
-                method: "POST",
-                credentials: 'include',
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ oldpassword: password.oldPass, newPassword: password.newPass })
-            });
-            const json = await response.json();
-            console.log(json);
-            if (json.success) {
-                showAlert("password changed login in again.", "success");
-                Cookies.remove("refreshToken");
-                Cookies.remove("accessToken");
-                history.push("/login");
-            } else {
-                showAlert("error occured", "danger");
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            showAlert("An error occurred. Please try again later.", "danger");
-        }
+        ForgotPassword(password.oldPass, password.newPass);
+    };
 
+    const handleChange = (e) => {
+        Setpasword({ ...password, [e.target.name]: e.target.value })
     }
-
     return (
 
         <form onSubmit={handleClick}>
@@ -76,4 +51,4 @@ const ForgotPassword = ({ history }) => {
     )
 }
 
-export default withRouter(ForgotPassword);
+export default ForgotPassword;

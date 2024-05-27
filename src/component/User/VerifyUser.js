@@ -1,61 +1,49 @@
 import React, { useContext, useState } from 'react';
-import AlertContext from '../../Context/Alert/AlertContext';
-import { withRouter } from 'react-router-dom';
+import userContext from '../../Context/User/UserContext';
 
-const VerifyUser = ({ history }) => {
-  const { showAlert } = useContext(AlertContext);
-  const host = "http://localhost:5000";
-  const id = localStorage.getItem('userID');
+const VerifyUser = () => {
   const [credentials, setCredentials] = useState({ otp: "" });
+
+  const { VerifyUser, sendOtpAgain } = useContext(userContext);
+
 
   const verify = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch(`${host}/api/auth/verifyuser/${id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ OTP: credentials.otp })
-      });
-      const json = await response.json();
-      console.log("Response from server:", json);
-      if (json.success) {
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("accessToken");
-        showAlert("User verified successfully", "success");
-        history.push('/login');
-      } else {
-        showAlert("Invalid OTP", "danger");
-      }
-    } catch (error) {
-      console.error("Error verifying user:", error);
-      showAlert("Something went wrong", "danger");
-    }
+    VerifyUser(credentials.otp);
   };
+
+  const otpAgain = async (e) => {
+    e.preventDefault();
+    sendOtpAgain();
+  }
   const handleChange = (e) => {
-    setCredentials({ [e.target.name]: e.target.value })
+    setCredentials({ ...credentials, [e.target.name]: e.target.value })
   }
 
   return (
-    <form onSubmit={verify}>
-      <div className="row mb-3 mt-3">
-        <label htmlFor="OTP" className="col-sm-2 col-form-label">OTP</label>
-        <div className="col-sm-10">
-          <input
-            type="text"
-            className="form-control"
-            name='otp'
-            id="OTP"
-            value={credentials.otp}
-            onChange={handleChange}
-            required
-          />
-          <button type="submit" className="btn btn-primary">Verify</button>
+    <div className="d-flex justify-content-center align-items-center" style={{ height: '90vh', overflow: 'hidden' }}>
+      <form onSubmit={verify} className="shadow p-4 rounded" style={{ maxWidth: '500px', width: '100%' }}>
+        <div className="row mb-3 mt-3">
+          <label htmlFor="OTP" className="col-sm-2 col-form-label">OTP</label>
+          <div className="col-sm-10">
+            <input
+              type="text"
+              className="form-control shadow-sm"
+              name='otp'
+              id="OTP"
+              value={credentials.otp}
+              onChange={handleChange}
+              required
+            />
+          </div>
         </div>
-      </div>
-    </form>
+        <div className="text-center mb-3">
+          <button type="button" className="btn btn-primary me-2" onClick={otpAgain}>Resend</button>
+          <button type="submit" className="btn btn-primary" onClick={VerifyUser}>Verify</button>
+        </div>
+      </form>
+    </div>
   );
 }
 
-export default withRouter(VerifyUser);
+export default VerifyUser;

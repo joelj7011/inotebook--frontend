@@ -1,91 +1,95 @@
-import React, { useState, useContext } from 'react';
-import AlertContext from "../../Context/Alert/AlertContext";
-import { withRouter } from 'react-router-dom';
-import { Link } from 'react-router-dom/cjs/react-router-dom.min';
-import Cookies from 'js-cookie';
-const Login = ({ history }) => {
-  const { showAlert } = useContext(AlertContext);
+import React, { useContext, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import userContext from '../../Context/User/UserContext';
+import AuthContext from '../../Context/Auth/AuthContext';
+
+
+const Login = () => {
+
+  const { logIn } = useContext(userContext);
+  let [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  const { auth, persist, setPersist } = useContext(AuthContext);
 
   const handleClick = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: credentials.email, password: credentials.password })
-      });
-
-      const json = await response.json()
-      console.log(json.message);
-      if (json.success) {
-        const currentTime = Date.now();
-        const expirationTime = currentTime + 3 * 60 * 1000;
-        Cookies.set('refreshToken', json.data.refreshToken, { expires: expirationTime });
-        Cookies.set("accessToken", json.data.accessToken, { expires: expirationTime });
-        Cookies.set("expiery", expirationTime);
-        showAlert(json.message, "success");
-        history.push('/');
-      } else {
-        showAlert("Invalid credentials", "danger");
-      }
+      setLoading(true);
+      await logIn(credentials.email, credentials.password);
     } catch (error) {
       console.error("Error:", error);
-      showAlert("An error occurred. Please try again later.", "danger");
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
-  return (
-    <form onSubmit={handleClick}>
-      <div className="row mb-3 mt-3">
-        <label htmlFor="email" className="col-sm-2 col-form-label">Email</label>
-        <div className="col-sm-10">
-          <input
-            type="email"
-            className="form-control"
-            id="email"
-            name="email"
-            value={credentials.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-      <div className="row mb-3">
-        <label htmlFor="password" className="col-sm-2 col-form-label">Password</label>
-        <div className="col-sm-10">
-          <input
-            type="password"
-            className="form-control"
-            id="password"
-            name="password"
-            value={credentials.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-      <div className="row mb-3">
-        <div className="col-sm-10 offset-sm-2"></div>
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
-      </button>
-      {localStorage.getItem('token') ? (<Link className="btn btn-primary mx-2" to="/forgotpass" role='button'>ForgotPassword</Link>) : ``}
+  const tooglePersist = () => {
+    setPersist(prev => prev = !prev)
+  }
 
+  useEffect(() => {
+    localStorage.setItem('persist', persist);
+  }, [persist])
+
+
+
+  return (
+    <div className="d-flex justify-content-center align-items-center" style={{ height: '90vh', overflow: 'hidden' }}>
+    <form onSubmit={handleClick} className="shadow p-4 rounded" style={{ maxWidth: '500px', width: '100%' }}>
+        <div className="mb-3">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+                type="email"
+                className="form-control shadow-sm"
+                id="email"
+                name="email"
+                value={credentials.email}
+                onChange={handleChange}
+                required
+            />
+        </div>
+        <div className="mb-3">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+                type="password"
+                className="form-control shadow-sm"
+                id="password"
+                name="password"
+                value={credentials.password}
+                onChange={handleChange}
+                required
+            />
+        </div>
+        <div className="mb-4 d-flex align-items-center">
+            <input
+                className="form-check-input"
+                type="checkbox"
+                id="rememberMe"
+                checked={persist}
+                onChange={tooglePersist}
+            />
+            <label className="form-check-label ms-2 me-auto" htmlFor="rememberMe">
+                Remember Me
+            </label>
+            <Link to="/loginWithOtp" className="ms-3">Or login with OTP</Link>
+        </div>
+        <div className="text-center">
+            <button type="submit" className="btn btn-primary" style={{ width: '150px' }} disabled={loading}>
+                {loading ? 'Logging in...' : 'Login'}
+            </button>
+            {auth.accessToken && (
+                <Link className="btn btn-secondary ms-2" to="/forgotpass" role='button'>Forgot Password</Link>
+            )}
+        </div>
     </form>
+</div>
+
   );
 };
 
-export default withRouter(Login);
+export default Login;
